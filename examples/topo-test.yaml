@@ -1,0 +1,21 @@
+apiVersion: topo.nddo.yndd.io/v1alpha1
+kind: TopoTopology
+metadata:
+  name: topo-test
+  namespace: default
+spec:
+  active: true
+  networkNodeRef:
+    name: dummy
+  forNetworkNode:
+    topology:
+      name: test
+      kind:
+      - name: srl
+        tag:
+        - key: platform
+          value: ixrd2
+      - name: sros
+        tag:
+        - key: platform
+          value: sr1

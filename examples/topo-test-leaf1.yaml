@@ -1,0 +1,14 @@
+apiVersion: topo.nddo.yndd.io/v1alpha1
+kind: TopoTopologyNode
+metadata:
+  name: topo-test-leaf1
+  namespace: default
+spec:
+  active: true
+  networkNodeRef:
+    name: dummy
+  forNetworkNode:
+    topology-name: test
+    node:
+      name: leaf1
+      kind-name: srl

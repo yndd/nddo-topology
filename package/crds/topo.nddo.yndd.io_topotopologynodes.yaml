@@ -1,0 +1,206 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: topotopologynodes.topo.nddo.yndd.io
+spec:
+  group: topo.nddo.yndd.io
+  names:
+    categories:
+    - ndd
+    - topo
+    kind: TopoTopologyNode
+    listKind: TopoTopologyNodeList
+    plural: topotopologynodes
+    singular: topotopologynode
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.kind=='TargetFound')].status
+      name: TARGET
+      type: string
+    - jsonPath: .status.conditions[?(@.kind=='Ready')].status
+      name: STATUS
+      type: string
+    - jsonPath: .status.conditions[?(@.kind=='Synced')].status
+      name: SYNC
+      type: string
+    - jsonPath: .status.conditions[?(@.kind=='InternalLeafrefValidationSuccess')].status
+      name: LOCALLEAFREF
+      type: string
+    - jsonPath: .status.conditions[?(@.kind=='ExternalLeafrefValidationSuccess')].status
+      name: EXTLEAFREF
+      type: string
+    - jsonPath: .status.conditions[?(@.kind=='ParentValidationSuccess')].status
+      name: PARENTDEP
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: AGE
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: TopoTopologyNode is the Schema for the TopologyNode API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: A TopologyNodeSpec defines the desired state of a TopologyNode.
+            properties:
+              active:
+                default: true
+                description: Active specifies if the managed resource is active or
+                  not
+                type: boolean
+              deletionPolicy:
+                default: Delete
+                description: DeletionPolicy specifies what will happen to the underlying
+                  external when this managed resource is deleted - either "Delete"
+                  or "Orphan" the external resource.
+                enum:
+                - Orphan
+                - Delete
+                type: string
+              forNetworkNode:
+                description: TopologyNodeParameters are the parameter fields of a
+                  TopologyNode.
+                properties:
+                  node:
+                    description: TopologyNode struct
+                    properties:
+                      admin-state:
+                        default: enable
+                        enum:
+                        - disable
+                        - enable
+                        type: string
+                      description:
+                        description: kubebuilder:validation:MinLength=1 kubebuilder:validation:MaxLength=255
+                        pattern: '[A-Za-z0-9 !@#$^&()|+=`~.,''/_:;?-]*'
+                        type: string
+                      kind-name:
+                        type: string
+                      name:
+                        type: string
+                      tag:
+                        items:
+                          description: TopologyNodeTag struct
+                          properties:
+                            key:
+                              description: kubebuilder:validation:MinLength=1 kubebuilder:validation:MaxLength=255
+                              pattern: '[A-Za-z0-9 !@#$^&()|+=`~.,''/_:;?-]*'
+                              type: string
+                            value:
+                              description: kubebuilder:validation:MinLength=1 kubebuilder:validation:MaxLength=255
+                              pattern: '[A-Za-z0-9 !@#$^&()|+=`~.,''/_:;?-]*'
+                              type: string
+                          required:
+                          - key
+                          type: object
+                        type: array
+                    required:
+                    - name
+                    type: object
+                  topology-name:
+                    type: string
+                required:
+                - topology-name
+                type: object
+              networkNodeRef:
+                default:
+                  name: default
+                description: NetworkNodeReference specifies which network node will
+                  be used to create, observe, update, and delete this managed resource
+                properties:
+                  name:
+                    description: Name of the referenced object.
+                    type: string
+                required:
+                - name
+                type: object
+            required:
+            - forNetworkNode
+            type: object
+          status:
+            description: A TopologyNodeStatus represents the observed state of a TopologyNode.
+            properties:
+              atNetworkNode:
+                description: TopologyNodeObservation are the observable fields of
+                  a TopologyNode.
+                type: object
+              conditions:
+                description: Conditions of the resource.
+                items:
+                  description: A Condition that may apply to a resource
+                  properties:
+                    kind:
+                      description: Type of this condition. At most one of each condition
+                        type may apply to a resource at any point in time.
+                      type: string
+                    lastTransitionTime:
+                      description: LastTransitionTime is the last time this condition
+                        transitioned from one status to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: A Message containing details about this condition's
+                        last transition from one status to another, if any.
+                      type: string
+                    reason:
+                      description: A Reason for this condition's last transition from
+                        one status to another.
+                      type: string
+                    status:
+                      description: Status of this condition; is it currently True,
+                        False, or Unknown?
+                      type: string
+                  required:
+                  - kind
+                  - lastTransitionTime
+                  - reason
+                  - status
+                  type: object
+                type: array
+              externalLeafRefs:
+                description: ExternalLeafRefs tracks the external resources this resource
+                  is dependent upon
+                items:
+                  type: string
+                type: array
+              resourceIndexes:
+                additionalProperties:
+                  type: string
+                description: ResourceIndexes tracks the indexes that or used by the
+                  resource
+                type: object
+              target:
+                description: Target used by the resource
+                items:
+                  type: string
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

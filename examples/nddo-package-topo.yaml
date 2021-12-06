@@ -1,0 +1,8 @@
+apiVersion: pkg.ndd.yndd.io/v1
+kind: Intent
+metadata:
+  name: nddo-topo
+  namespace: ndd-system
+spec:
+  package: yndd/nddo-intent-topo:latest
+  packagePullPolicy: Always
