@@ -22,6 +22,13 @@ import (
 	"github.com/yndd/ndd-runtime/pkg/utils"
 )
 
+func (x *TopologyNodeParameters) GetTopologyName() string {
+	if reflect.ValueOf(x.TopologyName).IsZero() {
+		return ""
+	}
+	return *x.TopologyName
+}
+
 func (x *NddotopologyTopologyNode) GetName() string {
 	if reflect.ValueOf(x.Name).IsZero() {
 		return ""

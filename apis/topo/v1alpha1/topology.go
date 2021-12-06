@@ -18,6 +18,13 @@ package v1alpha1
 
 import "reflect"
 
+func (x *TopologyParameters) GetTopologyName() string {
+	if reflect.ValueOf(x.TopoTopology.Name).IsZero() {
+		return ""
+	}
+	return *x.TopoTopology.Name
+}
+
 func (x *NddotopologyTopology) GetName() string {
 	if reflect.ValueOf(x.Name).IsZero() {
 		return ""
