@@ -92,7 +92,8 @@ type TopologyParameters struct {
 
 // TopologyObservation are the observable fields of a Topology.
 type TopologyObservation struct {
-	*Nddotopology `json:",inline"`
+	//*Nddotopology `json:",inline"`
+	TopoTopology *NddotopologyTopology `json:"topology,omitempty"`
 }
 
 // A TopologySpec defines the desired state of a Topology.

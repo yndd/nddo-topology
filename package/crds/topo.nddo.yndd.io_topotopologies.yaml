@@ -1,5 +1,5 @@
 
----
+
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
@@ -169,17 +169,37 @@ spec:
                 description: TopologyObservation are the observable fields of a Topology.
                 properties:
                   topology:
-                    items:
-                      description: NddotopologyTopology struct
-                      properties:
-                        admin-state:
-                          type: string
-                        defaults:
-                          description: NddotopologyTopologyDefaults struct
+                    description: '*Nddotopology `json:",inline"`'
+                    properties:
+                      admin-state:
+                        type: string
+                      defaults:
+                        description: NddotopologyTopologyDefaults struct
+                        properties:
+                          tag:
+                            items:
+                              description: NddotopologyTopologyDefaultsTag struct
+                              properties:
+                                key:
+                                  type: string
+                                value:
+                                  type: string
+                              required:
+                              - key
+                              type: object
+                            type: array
+                        type: object
+                      description:
+                        type: string
+                      kind:
+                        items:
+                          description: NddotopologyTopologyKind struct
                           properties:
+                            name:
+                              type: string
                             tag:
                               items:
-                                description: NddotopologyTopologyDefaultsTag struct
+                                description: NddotopologyTopologyKindTag struct
                                 properties:
                                   key:
                                     type: string
@@ -189,162 +209,178 @@ spec:
                                 - key
                                 type: object
                               type: array
+                          required:
+                          - name
                           type: object
-                        description:
-                          type: string
-                        kind:
-                          items:
-                            description: NddotopologyTopologyKind struct
-                            properties:
-                              name:
-                                type: string
-                              tag:
-                                items:
-                                  description: NddotopologyTopologyKindTag struct
-                                  properties:
-                                    key:
-                                      type: string
-                                    value:
-                                      type: string
-                                  required:
-                                  - key
-                                  type: object
-                                type: array
-                            required:
-                            - name
-                            type: object
-                          type: array
-                        link:
-                          items:
-                            description: NddotopologyTopologyLink struct
-                            properties:
-                              admin-state:
-                                type: string
-                              description:
-                                type: string
-                              endpoints:
-                                items:
-                                  description: NddotopologyTopologyLinkEndpoints struct
-                                  properties:
-                                    interface-name:
-                                      type: string
-                                    node-name:
-                                      type: string
-                                    tag:
-                                      items:
-                                        description: NddotopologyTopologyLinkEndpointsTag
-                                          struct
-                                        properties:
-                                          key:
-                                            type: string
-                                          value:
-                                            type: string
-                                        required:
-                                        - key
-                                        type: object
-                                      type: array
-                                  required:
-                                  - interface-name
-                                  - node-name
-                                  type: object
-                                type: array
-                              name:
-                                type: string
-                              state:
-                                description: NddotopologyTopologyLinkState struct
+                        type: array
+                      link:
+                        items:
+                          description: NddotopologyTopologyLink struct
+                          properties:
+                            admin-state:
+                              type: string
+                            description:
+                              type: string
+                            endpoints:
+                              items:
+                                description: NddotopologyTopologyLinkEndpoints struct
                                 properties:
-                                  last-update:
+                                  interface-name:
                                     type: string
-                                  reason:
+                                  node-name:
                                     type: string
-                                  status:
-                                    type: string
-                                type: object
-                              tag:
-                                items:
-                                  description: NddotopologyTopologyLinkTag struct
-                                  properties:
-                                    key:
-                                      type: string
-                                    value:
-                                      type: string
-                                  required:
-                                  - key
-                                  type: object
-                                type: array
-                            required:
-                            - name
-                            type: object
-                          type: array
-                        name:
-                          type: string
-                        node:
-                          items:
-                            description: NddotopologyTopologyNode struct
-                            properties:
-                              admin-state:
-                                type: string
-                              description:
-                                type: string
-                              kind-name:
-                                type: string
-                              name:
-                                type: string
-                              state:
-                                description: NddotopologyTopologyNodeState struct
-                                properties:
-                                  endpoint:
+                                  tag:
                                     items:
-                                      description: NddotopologyTopologyNodeStateEndpoint
+                                      description: NddotopologyTopologyLinkEndpointsTag
                                         struct
                                       properties:
-                                        lag:
-                                          type: boolean
-                                        lag-sub-link:
-                                          type: boolean
-                                        name:
+                                        key:
+                                          type: string
+                                        value:
                                           type: string
                                       required:
-                                      - name
+                                      - key
                                       type: object
                                     type: array
-                                  last-update:
-                                    type: string
-                                  reason:
-                                    type: string
-                                  status:
-                                    type: string
+                                required:
+                                - interface-name
+                                - node-name
                                 type: object
-                              tag:
-                                items:
-                                  description: NddotopologyTopologyNodeTag struct
-                                  properties:
-                                    key:
-                                      type: string
-                                    value:
-                                      type: string
-                                  required:
-                                  - key
-                                  type: object
-                                type: array
-                            required:
-                            - name
-                            type: object
-                          type: array
-                        state:
-                          description: NddotopologyTopologyState struct
-                          properties:
-                            last-update:
+                              type: array
+                            name:
                               type: string
-                            reason:
-                              type: string
-                            status:
-                              type: string
+                            state:
+                              description: NddotopologyTopologyLinkState struct
+                              properties:
+                                last-update:
+                                  type: string
+                                reason:
+                                  type: string
+                                status:
+                                  type: string
+                                tag:
+                                  items:
+                                    description: NddotopologyTopologyLinkStateTag
+                                      struct
+                                    properties:
+                                      key:
+                                        type: string
+                                      value:
+                                        type: string
+                                    required:
+                                    - key
+                                    type: object
+                                  type: array
+                              type: object
+                            tag:
+                              items:
+                                description: NddotopologyTopologyLinkTag struct
+                                properties:
+                                  key:
+                                    type: string
+                                  value:
+                                    type: string
+                                required:
+                                - key
+                                type: object
+                              type: array
+                          required:
+                          - name
                           type: object
-                      required:
-                      - name
-                      type: object
-                    type: array
+                        type: array
+                      name:
+                        type: string
+                      node:
+                        items:
+                          description: NddotopologyTopologyNode struct
+                          properties:
+                            admin-state:
+                              type: string
+                            description:
+                              type: string
+                            kind-name:
+                              type: string
+                            name:
+                              type: string
+                            state:
+                              description: NddotopologyTopologyNodeState struct
+                              properties:
+                                endpoint:
+                                  items:
+                                    description: NddotopologyTopologyNodeStateEndpoint
+                                      struct
+                                    properties:
+                                      lag:
+                                        type: boolean
+                                      lag-sub-link:
+                                        type: boolean
+                                      name:
+                                        type: string
+                                    required:
+                                    - name
+                                    type: object
+                                  type: array
+                                last-update:
+                                  type: string
+                                reason:
+                                  type: string
+                                status:
+                                  type: string
+                                tag:
+                                  items:
+                                    description: NddotopologyTopologyNodeStateTag
+                                      struct
+                                    properties:
+                                      key:
+                                        type: string
+                                      value:
+                                        type: string
+                                    required:
+                                    - key
+                                    type: object
+                                  type: array
+                              type: object
+                            tag:
+                              items:
+                                description: NddotopologyTopologyNodeTag struct
+                                properties:
+                                  key:
+                                    type: string
+                                  value:
+                                    type: string
+                                required:
+                                - key
+                                type: object
+                              type: array
+                          required:
+                          - name
+                          type: object
+                        type: array
+                      state:
+                        description: NddotopologyTopologyState struct
+                        properties:
+                          last-update:
+                            type: string
+                          reason:
+                            type: string
+                          status:
+                            type: string
+                          tag:
+                            items:
+                              description: NddotopologyTopologyStateTag struct
+                              properties:
+                                key:
+                                  type: string
+                                value:
+                                  type: string
+                              required:
+                              - key
+                              type: object
+                            type: array
+                        type: object
+                    required:
+                    - name
+                    type: object
                 type: object
               conditions:
                 description: Conditions of the resource.

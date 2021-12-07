@@ -140,12 +140,12 @@ func (n *NddotopologyTopologyNode) SetLastUpdate(s string) {
 }
 
 func (n *NddotopologyTopologyNode) SetPlatform(s string) {
-	if n.Tag == nil {
-		n.Tag = make([]*NddotopologyTopologyNodeTag, 0)
+	if n.State.Tag == nil {
+		n.State.Tag = make([]*NddotopologyTopologyNodeStateTag, 0)
 	}
-	t := &NddotopologyTopologyNodeTag{
+	t := &NddotopologyTopologyNodeStateTag{
 		Key:   utils.StringPtr(Platform),
 		Value: &s,
 	}
-	n.Tag = append(n.Tag, t)
+	n.State.Tag = append(n.State.Tag, t)
 }

@@ -22,7 +22,9 @@ import (
 )
 
 func initTopologyState(p *yentry.Entry, opts ...yentry.EntryOption) *yentry.Entry {
-	children := map[string]yentry.EntryInitFunc{}
+	children := map[string]yentry.EntryInitFunc{
+		"tag": initTopologyStateTag,
+	}
 	e := &yentry.Entry{
 		Name:             "state",
 		Key:              []string{},

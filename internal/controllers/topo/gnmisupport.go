@@ -18,6 +18,7 @@ package topo
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/pkg/errors"
@@ -34,14 +35,15 @@ const (
 // 0. marshal/unmarshal data
 // 1. check if resource exists
 // 2. remove parent hierarchical elements from spec
-// TODO 3. remove resource hierarchicaal elements from gnmi response
+// 3. remove resource hierarchicaal elements from gnmi response
+// 4. remove state from spec data
 // 4. transform the data in gnmi to process the delta
 // 5. find the resource delta: updates and/or deletes in gnmi
-func processObserve(rootPath *gnmi.Path, hierPaths []*gnmi.Path, specData interface{}, resp *gnmi.GetResponse, rootSchema *yentry.Entry) (bool, []*gnmi.Path, []*gnmi.Update, error) {
+func processObserve(rootPath *gnmi.Path, hierPaths []*gnmi.Path, specData interface{}, resp *gnmi.GetResponse, rootSchema *yentry.Entry) (bool, []*gnmi.Path, []*gnmi.Update, []byte, error) {
 	// prepare the input data to compare against the response data
 	x1, err := processSpecData(rootPath, specData)
 	if err != nil {
-		return false, nil, nil, err
+		return false, nil, nil, nil, err
 	}
 
 	// validate gnmi resp information
@@ -50,7 +52,7 @@ func processObserve(rootPath *gnmi.Path, hierPaths []*gnmi.Path, specData interf
 		// get value from gnmi get response
 		x2, err = yparser.GetValue(resp.GetNotification()[0].GetUpdate()[0].Val)
 		if err != nil {
-			return false, nil, nil, errors.Wrap(err, errJSONMarshal)
+			return false, nil, nil, nil, errors.Wrap(err, errJSONMarshal)
 		}
 
 		//fmt.Printf("processObserve: raw x2: %v\n", x2)
@@ -59,7 +61,7 @@ func processObserve(rootPath *gnmi.Path, hierPaths []*gnmi.Path, specData interf
 		case nil:
 			// resource does not exist and we return
 			// RESOURCE DOES NOT EXIST
-			return false, nil, nil, nil
+			return false, nil, nil, nil, nil
 
 		}
 		/*
@@ -82,10 +84,10 @@ func processObserve(rootPath *gnmi.Path, hierPaths []*gnmi.Path, specData interf
 	switch x := x1.(type) {
 	case map[string]interface{}:
 		x1 = x[rootPath.GetElem()[len(rootPath.GetElem())-1].GetName()]
-		//fmt.Printf("processObserve x1 data %v\n", x1)
+		fmt.Printf("processObserve x1 data %v\n", x1)
 	}
 	// the gnmi response already comes without the last element in the return data
-	//fmt.Printf("processObserve x2 data %v\n", x2)
+	fmt.Printf("processObserve x2 data %v\n", x2)
 
 	// remove hierarchical resource elements from the data to be able to compare the gnmi response
 	// with the k8s Spec
@@ -94,10 +96,23 @@ func processObserve(rootPath *gnmi.Path, hierPaths []*gnmi.Path, specData interf
 		for _, hierPath := range hierPaths {
 			x2 = removeHierarchicalResourceData(x, hierPath)
 		}
-
 	}
 
-	//fmt.Printf("processObserve x2 data %v\n", x2)
+	// prepare the return data that will be used in the status field
+	b, err := json.Marshal(x2)
+	if err != nil {
+		fmt.Printf("Mmarshal error: %v", err)
+		return false, nil, nil, nil, errors.Wrap(err, errJSONMarshal)
+	}
+
+	// remove state elements from the data
+	switch x := x2.(type) {
+	case map[string]interface{}:
+		x2 = removeState(x)
+	}
+
+	fmt.Printf("processObserve x2 data %v\n", x2)
+
 	// data is present
 	// for lists with keys we need to create a list before calulating the paths since this is what
 	// the object eventually happens to be based upon. We avoid having multiple entries in a list object
@@ -110,7 +125,7 @@ func processObserve(rootPath *gnmi.Path, hierPaths []*gnmi.Path, specData interf
 	//}
 	updatesx1, err := yparser.GetUpdatesFromJSON(rootPath, x1, rootSchema)
 	if err != nil {
-		return false, nil, nil, errors.Wrap(err, errJSONMarshal)
+		return false, nil, nil, nil, errors.Wrap(err, errJSONMarshal)
 	}
 	/*
 		for _, update := range updatesx1 {
@@ -138,7 +153,7 @@ func processObserve(rootPath *gnmi.Path, hierPaths []*gnmi.Path, specData interf
 	//}
 	updatesx2, err := yparser.GetUpdatesFromJSON(rootPath, x2, rootSchema)
 	if err != nil {
-		return false, nil, nil, errors.Wrap(err, errJSONMarshal)
+		return false, nil, nil, nil, errors.Wrap(err, errJSONMarshal)
 	}
 	/*
 		for _, update := range updatesx2 {
@@ -150,8 +165,7 @@ func processObserve(rootPath *gnmi.Path, hierPaths []*gnmi.Path, specData interf
 	//	log.Debug("Observe Fine Grane Updates X2", "Path", e.parser.GnmiPathToXPath(update.Path, true), "Value", update.GetVal())
 	//}
 	deletes, updates, err := yparser.FindResourceDelta(updatesx1, updatesx2)
-	return true, deletes, updates, err
-
+	return true, deletes, updates, b, err
 }
 
 // processCreate
@@ -223,6 +237,37 @@ func removeHierarchicalResourceData(x map[string]interface{}, hierPath *gnmi.Pat
 				// it can be that no data is present, so we ignore this
 			}
 		}
+	}
+
+	return x
+}
+
+func removeState(x interface{}) interface{} {
+	// this is the last pathElem of the hierarchical path, which is to be deleted
+	switch x1 := x.(type) {
+	case map[string]interface{}:
+		for k, v := range x1 {
+			if k == "state" {
+				delete(x1, k)
+				continue
+			}
+			removeState(v)
+		}
+
+	case []interface{}:
+		for _, xxx := range x1 {
+			switch x2 := xxx.(type) {
+			case map[string]interface{}:
+				for k, v := range x2 {
+					if k == "state" {
+						continue
+					}
+					removeState(v)
+				}
+			}
+		}
+	default:
+		// it can be that no data is present, so we ignore this
 	}
 
 	return x

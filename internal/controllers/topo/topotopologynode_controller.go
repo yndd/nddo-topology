@@ -118,20 +118,20 @@ func initYangTopologyNode(opts ...yresource.Option) yresource.Handler {
 // GetRootPath returns the rootpath of the resource
 func (r *TopologyNode) GetRootPath(mg resource.Managed) []*gnmi.Path {
 	// json unmarshal the resource
-	o, ok := mg.(*topov1alpha1.TopoTopologyNode)
+	cr, ok := mg.(*topov1alpha1.TopoTopologyNode)
 	if !ok {
 		return []*gnmi.Path{}
 	}
-	//r.Log.Debug("GetRootPath", "Data", o.Spec.ForNetworkNode)
+	//r.Log.Debug("GetRootPath", "Data", cr.Spec.ForNetworkNode)
 
 	return []*gnmi.Path{
 		{
 			Elem: []*gnmi.PathElem{
 				{Name: "topology", Key: map[string]string{
-					"name": *o.Spec.ForNetworkNode.TopologyName,
+					"name": *cr.Spec.ForNetworkNode.TopologyName,
 				}},
 				{Name: "node", Key: map[string]string{
-					"name": *o.Spec.ForNetworkNode.TopoTopologyNode.Name,
+					"name": *cr.Spec.ForNetworkNode.TopoTopologyNode.Name,
 				}},
 			},
 		},
@@ -184,11 +184,11 @@ func (v *validatorTopologyNode) ValidateExternalleafRef(ctx context.Context, mg 
 	log.Debug("ValidateExternalleafRef...")
 
 	// json unmarshal the resource
-	o, ok := mg.(*topov1alpha1.TopoTopologyNode)
+	cr, ok := mg.(*topov1alpha1.TopoTopologyNode)
 	if !ok {
 		return managed.ValidateExternalleafRefObservation{}, errors.New(errUnexpectedTopologyNode)
 	}
-	d, err := json.Marshal(&o.Spec.ForNetworkNode.TopoTopologyNode)
+	d, err := json.Marshal(&cr.Spec.ForNetworkNode.TopoTopologyNode)
 	if err != nil {
 		return managed.ValidateExternalleafRefObservation{}, errors.Wrap(err, errJSONMarshal)
 	}
@@ -199,7 +199,7 @@ func (v *validatorTopologyNode) ValidateExternalleafRef(ctx context.Context, mg 
 	var x2 interface{}
 	json.Unmarshal(cfg, &x2)
 
-	rootPath := v.y.GetRootPath(o)
+	rootPath := v.y.GetRootPath(cr)
 
 	leafRefs := v.rootSchema.GetLeafRefsLocal(true, rootPath[0], &gnmi.Path{}, make([]*leafref.LeafRef, 0))
 	log.Debug("Validate leafRefs ...", "Path", yparser.GnmiPath2XPath(rootPath[0], false), "leafRefs", leafRefs)
@@ -280,13 +280,13 @@ func (v *validatorTopologyNode) ValidateResourceIndexes(ctx context.Context, mg 
 	log := v.log.WithValues("resource", mg.GetName())
 
 	// json unmarshal the resource
-	o, ok := mg.(*topov1alpha1.TopoTopologyNode)
+	cr, ok := mg.(*topov1alpha1.TopoTopologyNode)
 	if !ok {
 		return managed.ValidateResourceIndexesObservation{}, errors.New(errUnexpectedTopologyNode)
 	}
-	log.Debug("ValidateResourceIndexes", "Spec", o.Spec)
+	log.Debug("ValidateResourceIndexes", "Spec", cr.Spec)
 
-	rootPath := v.y.GetRootPath(o)
+	rootPath := v.y.GetRootPath(cr)
 
 	origResourceIndex := mg.GetResourceIndexes()
 	// we call the CompareConfigPathsWithResourceKeys irrespective is the get resource index returns nil
@@ -359,15 +359,15 @@ type externalTopologyNode struct {
 }
 
 func (e *externalTopologyNode) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
-	o, ok := mg.(*topov1alpha1.TopoTopologyNode)
+	cr, ok := mg.(*topov1alpha1.TopoTopologyNode)
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errUnexpectedTopologyNode)
 	}
-	log := e.log.WithValues("Resource", o.GetName())
+	log := e.log.WithValues("Resource", cr.GetName())
 	log.Debug("Observing ...")
 
 	// rootpath of the resource
-	rootPath := e.y.GetRootPath(o)
+	rootPath := e.y.GetRootPath(cr)
 	hierElements := e.rootSchema.GetHierarchicalResourcesLocal(true, rootPath[0], &gnmi.Path{}, make([]*gnmi.Path, 0))
 	log.Debug("Observing hierElements ...", "Path", yparser.GnmiPath2XPath(rootPath[0], false), "hierElements", hierElements)
 
@@ -376,7 +376,7 @@ func (e *externalTopologyNode) Observe(ctx context.Context, mg resource.Managed)
 		Prefix:   &gnmi.Path{Target: GnmiTarget, Origin: GnmiOrigin},
 		Path:     rootPath,
 		Encoding: gnmi.Encoding_JSON,
-		Type:     gnmi.GetRequest_DataType(gnmi.GetRequest_CONFIG),
+		Type:     gnmi.GetRequest_DataType(gnmi.GetRequest_STATE),
 	}
 
 	// gnmi get response
@@ -390,9 +390,10 @@ func (e *externalTopologyNode) Observe(ctx context.Context, mg resource.Managed)
 	// 1. check if resource exists
 	// 2. remove parent hierarchical elements from spec
 	// 3. remove resource hierarchical elements from gnmi response
-	// 4. transform the data in gnmi to process the delta
-	// 5. find the resource delta: updates and/or deletes in gnmi
-	exists, deletes, updates, err := processObserve(rootPath[0], hierElements, &o.Spec.ForNetworkNode, resp, e.rootSchema)
+	// 4. remove state
+	// 5. transform the data in gnmi to process the delta
+	// 6. find the resource delta: updates and/or deletes in gnmi
+	exists, deletes, updates, b, err := processObserve(rootPath[0], hierElements, &cr.Spec.ForNetworkNode, resp, e.rootSchema)
 	if err != nil {
 		return managed.ExternalObservation{}, err
 	}
@@ -407,6 +408,17 @@ func (e *externalTopologyNode) Observe(ctx context.Context, mg resource.Managed)
 		}, nil
 	}
 	// Data exists
+
+	var s topov1alpha1.NddotopologyTopologyNode
+	log.Debug("data", "string", string(b))
+	if err := json.Unmarshal(b, &s); err != nil {
+		log.Debug("Unmarshal error", "error", err)
+		return managed.ExternalObservation{}, err
+	}
+
+	log.Debug("Status", "Data", s)
+	cr.Status.AtNetworkNode.TopoTopologyNode = &s
+
 	if len(deletes) != 0 || len(updates) != 0 {
 		// resource is NOT up to date
 		log.Debug("Observing Response: resource NOT up to date", "Exists", true, "HasData", true, "UpToDate", false, "Response", resp, "Updates", updates, "Deletes", deletes)
@@ -437,20 +449,20 @@ func (e *externalTopologyNode) Observe(ctx context.Context, mg resource.Managed)
 }
 
 func (e *externalTopologyNode) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
-	o, ok := mg.(*topov1alpha1.TopoTopologyNode)
+	cr, ok := mg.(*topov1alpha1.TopoTopologyNode)
 	if !ok {
 		return managed.ExternalCreation{}, errors.New(errUnexpectedTopologyNode)
 	}
-	log := e.log.WithValues("Resource", o.GetName())
+	log := e.log.WithValues("Resource", cr.GetName())
 	log.Debug("Creating ...")
 
 	// get the rootpath of the resource
-	rootPath := e.y.GetRootPath(o)
+	rootPath := e.y.GetRootPath(cr)
 
 	// processCreate
 	// 0. marshal/unmarshal data
 	// 1. transform the spec data to gnmi updates
-	updates, err := processCreate(rootPath[0], &o.Spec.ForNetworkNode, e.rootSchema)
+	updates, err := processCreate(rootPath[0], &cr.Spec.ForNetworkNode, e.rootSchema)
 	for _, update := range updates {
 		log.Debug("Create Fine Grane Updates", "Path", yparser.GnmiPath2XPath(update.Path, true), "Value", update.GetVal())
 	}
@@ -474,11 +486,11 @@ func (e *externalTopologyNode) Create(ctx context.Context, mg resource.Managed) 
 }
 
 func (e *externalTopologyNode) Update(ctx context.Context, mg resource.Managed, obs managed.ExternalObservation) (managed.ExternalUpdate, error) {
-	o, ok := mg.(*topov1alpha1.TopoTopologyNode)
+	cr, ok := mg.(*topov1alpha1.TopoTopologyNode)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errUnexpectedTopologyNode)
 	}
-	log := e.log.WithValues("Resource", o.GetName())
+	log := e.log.WithValues("Resource", cr.GetName())
 	log.Debug("Updating ...")
 
 	for _, u := range obs.ResourceUpdates {
@@ -503,15 +515,15 @@ func (e *externalTopologyNode) Update(ctx context.Context, mg resource.Managed, 
 }
 
 func (e *externalTopologyNode) Delete(ctx context.Context, mg resource.Managed) error {
-	o, ok := mg.(*topov1alpha1.TopoTopologyNode)
+	cr, ok := mg.(*topov1alpha1.TopoTopologyNode)
 	if !ok {
 		return errors.New(errUnexpectedTopologyNode)
 	}
-	log := e.log.WithValues("Resource", o.GetName())
+	log := e.log.WithValues("Resource", cr.GetName())
 	log.Debug("Deleting ...")
 
 	// get the rootpath of the resource
-	rootPath := e.y.GetRootPath(o)
+	rootPath := e.y.GetRootPath(cr)
 
 	req := gnmi.SetRequest{
 		Prefix: &gnmi.Path{Target: GnmiTarget, Origin: GnmiOrigin},

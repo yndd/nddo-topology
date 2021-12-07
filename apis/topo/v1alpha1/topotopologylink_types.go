@@ -93,6 +93,7 @@ type TopologyLinkParameters struct {
 
 // TopologyLinkObservation are the observable fields of a TopologyLink.
 type TopologyLinkObservation struct {
+	TopoTopologyLink *NddotopologyTopologyLink `json:"link,omitempty"`
 }
 
 // A TopologyLinkSpec defines the desired state of a TopologyLink.

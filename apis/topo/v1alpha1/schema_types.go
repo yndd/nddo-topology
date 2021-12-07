@@ -81,9 +81,16 @@ type NddotopologyTopologyLinkEndpointsTag struct {
 
 // NddotopologyTopologyLinkState struct
 type NddotopologyTopologyLinkState struct {
-	LastUpdate *string `json:"last-update,omitempty"`
-	Reason     *string `json:"reason,omitempty"`
-	Status     *string `json:"status,omitempty"`
+	LastUpdate *string                             `json:"last-update,omitempty"`
+	Reason     *string                             `json:"reason,omitempty"`
+	Status     *string                             `json:"status,omitempty"`
+	Tag        []*NddotopologyTopologyLinkStateTag `json:"tag,omitempty"`
+}
+
+// NddotopologyTopologyLinkStateTag struct
+type NddotopologyTopologyLinkStateTag struct {
+	Key   *string `json:"key"`
+	Value *string `json:"value,omitempty"`
 }
 
 // NddotopologyTopologyLinkTag struct
@@ -108,6 +115,7 @@ type NddotopologyTopologyNodeState struct {
 	LastUpdate *string                                  `json:"last-update,omitempty"`
 	Reason     *string                                  `json:"reason,omitempty"`
 	Status     *string                                  `json:"status,omitempty"`
+	Tag        []*NddotopologyTopologyNodeStateTag      `json:"tag,omitempty"`
 }
 
 // NddotopologyTopologyNodeStateEndpoint struct
@@ -115,6 +123,12 @@ type NddotopologyTopologyNodeStateEndpoint struct {
 	Lag        *bool   `json:"lag,omitempty"`
 	LagSubLink *bool   `json:"lag-sub-link,omitempty"`
 	Name       *string `json:"name"`
+}
+
+// NddotopologyTopologyNodeStateTag struct
+type NddotopologyTopologyNodeStateTag struct {
+	Key   *string `json:"key"`
+	Value *string `json:"value,omitempty"`
 }
 
 // NddotopologyTopologyNodeTag struct
@@ -125,9 +139,16 @@ type NddotopologyTopologyNodeTag struct {
 
 // NddotopologyTopologyState struct
 type NddotopologyTopologyState struct {
-	LastUpdate *string `json:"last-update,omitempty"`
-	Reason     *string `json:"reason,omitempty"`
-	Status     *string `json:"status,omitempty"`
+	LastUpdate *string                         `json:"last-update,omitempty"`
+	Reason     *string                         `json:"reason,omitempty"`
+	Status     *string                         `json:"status,omitempty"`
+	Tag        []*NddotopologyTopologyStateTag `json:"tag,omitempty"`
+}
+
+// NddotopologyTopologyStateTag struct
+type NddotopologyTopologyStateTag struct {
+	Key   *string `json:"key"`
+	Value *string `json:"value,omitempty"`
 }
 
 // Root is the root of the schema

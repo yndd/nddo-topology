@@ -1,5 +1,5 @@
 
----
+
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
@@ -172,6 +172,79 @@ spec:
               atNetworkNode:
                 description: TopologyLinkObservation are the observable fields of
                   a TopologyLink.
+                properties:
+                  link:
+                    description: NddotopologyTopologyLink struct
+                    properties:
+                      admin-state:
+                        type: string
+                      description:
+                        type: string
+                      endpoints:
+                        items:
+                          description: NddotopologyTopologyLinkEndpoints struct
+                          properties:
+                            interface-name:
+                              type: string
+                            node-name:
+                              type: string
+                            tag:
+                              items:
+                                description: NddotopologyTopologyLinkEndpointsTag
+                                  struct
+                                properties:
+                                  key:
+                                    type: string
+                                  value:
+                                    type: string
+                                required:
+                                - key
+                                type: object
+                              type: array
+                          required:
+                          - interface-name
+                          - node-name
+                          type: object
+                        type: array
+                      name:
+                        type: string
+                      state:
+                        description: NddotopologyTopologyLinkState struct
+                        properties:
+                          last-update:
+                            type: string
+                          reason:
+                            type: string
+                          status:
+                            type: string
+                          tag:
+                            items:
+                              description: NddotopologyTopologyLinkStateTag struct
+                              properties:
+                                key:
+                                  type: string
+                                value:
+                                  type: string
+                              required:
+                              - key
+                              type: object
+                            type: array
+                        type: object
+                      tag:
+                        items:
+                          description: NddotopologyTopologyLinkTag struct
+                          properties:
+                            key:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - key
+                          type: object
+                        type: array
+                    required:
+                    - name
+                    type: object
                 type: object
               conditions:
                 description: Conditions of the resource.

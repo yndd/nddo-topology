@@ -30,8 +30,8 @@ func Setup(mgr ctrl.Manager, option controller.Options, nddcopts *shared.NddCont
 	eventChans := make(map[string]chan event.GenericEvent)
 	for _, setup := range []func(ctrl.Manager, controller.Options, *shared.NddControllerOptions) (string, chan event.GenericEvent, error){
 		topo.SetupTopology,
-		topo.SetupTopologyLink,
 		topo.SetupTopologyNode,
+		topo.SetupTopologyLink,
 	} {
 		gvk, eventChan, err := setup(mgr, option, nddcopts)
 		if err != nil {
